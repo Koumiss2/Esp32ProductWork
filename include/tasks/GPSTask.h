@@ -4,10 +4,11 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "tasks/Task.h"
 
-class GPSTask {
+class GPSTask: public Task {
 public:
-    static void run(void* pvParameters);
+    static void run(void* pvParameters) override;
 };
 
 #endif
