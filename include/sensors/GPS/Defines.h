@@ -37,6 +37,7 @@ enum SpoofingCheck {
     ALTITUDE_ANOMALY,
     DATA_INCONSISTENCY,
     TIMESTAMP_ANOMALY,
+    HDOP_ANOMALY,
     NUM_CHECKS
 };
 
@@ -60,6 +61,9 @@ struct SpoofingState {
     uint32_t lastGpsTime = 0;
     uint32_t lastSystemTime = 0;
     bool firstTimeCheck = true;
+
+    uint32_t lastHDOPTime = 0;
+    float lastHDOP = 0;
 };
 
 #endif

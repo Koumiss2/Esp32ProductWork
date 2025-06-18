@@ -20,6 +20,7 @@ public:
     void checkSpoofing();
     void checkRecovery();
     void resetSpoofingState();
+    void checkHDOP();
 
     void setBaudRate(uint16_t);
     void begin(uint16_t);
