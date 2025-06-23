@@ -1,10 +1,11 @@
-#pragma once
+#ifndef WEB_SERVER_H
+#define WEB_SERVER_H
 
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include "sensors/GPS/Defines.h"
+#include "defines/Defines.h"
 #include "sensors/GPS/GPS.h"
 
 class DebugTool {
@@ -55,3 +56,5 @@ private:
     IPAddress gateway = {192, 168, 4, 1};
     IPAddress subnet = {255, 255, 255, 0};
 };
+
+#endif

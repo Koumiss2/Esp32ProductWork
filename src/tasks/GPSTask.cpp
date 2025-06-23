@@ -1,6 +1,6 @@
 #include "tasks/GPSTask.h"
 #include "sensors/GPS/GPS.h"
-#include "sensors/GPS/Defines.h"
+#include "defines/Defines.h"
 #include "WebServer/WebServer.h"
 
 void GPSTask::run(void* pvParameters) {
@@ -18,12 +18,11 @@ void GPSTask::run(void* pvParameters) {
                 gps.getGps().encode(c);
             
                 if (!isSpoofing) {
-                    Serial.write(c);  // Optional debug output
+                    Serial.write(c);  
                     nmeaBuffer += c;
                     
-                    // Send complete NMEA sentences
                     if (c == '\n') {
-                        server.sendNMEAData(nmeaBuffer);  // Use the proper method
+                        server.sendNMEAData(nmeaBuffer); 
                         nmeaBuffer = "";
                     }
                 } else {

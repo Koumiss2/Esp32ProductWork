@@ -1,12 +1,13 @@
 #ifndef GPS_H
 #define GPS_H
 
+#include <NMEAGPS.h>
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
-#include "sensors/GPS/Defines.h"
+#include "defines/Defines.h"
 #include "SimpleKalmanFilter.h"
 
 class GPS {
@@ -20,8 +21,6 @@ public:
     void checkSpoofing();
     void checkRecovery();
     void resetSpoofingState();
-    void checkHDOP();
-
     void setBaudRate(uint16_t);
     void begin(uint16_t);
     void end();
@@ -50,6 +49,8 @@ private:
     void checkDataConsistency();       // Средний приоритет  
     void checkAltitudeAnomalies();     // Низкий приоритет
     void checkTimestamps();            // Самый Низкий приоритет
+    void checkHDOP();                  // Низкий приоритет
+    void checkSNR();
 
     byte calculateCRC(const char *sentence);
 
@@ -71,4 +72,4 @@ private:
     uint16_t currentBaudRate = 9600; 
 };
 
-#endif // GPS_H
+#endif 

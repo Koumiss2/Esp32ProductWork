@@ -1,4 +1,3 @@
-// GPSTask.h
 #ifndef GPSTASK_H
 #define GPSTASK_H
 

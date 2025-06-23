@@ -1,7 +1,7 @@
 #include "tasks/SpoofingCheckTask.h"
 #include "tasks/GPSTask.h"
 #include "sensors/GPS/GPS.h"
-#include "sensors/GPS/Defines.h"
+#include "defines/Defines.h"
 
 void SpoofingCheckTask::run(void* pvParameters) {
     GPS& gps = GPS::getInstance();

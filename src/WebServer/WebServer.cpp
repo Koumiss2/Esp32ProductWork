@@ -2,202 +2,212 @@
 DebugTool::DebugTool(uint16_t port) 
     : server(port), 
       ws("/ws"),
-      currentBaudRate(115200) {
+      currentBaudRate(9600) {
     // Инициализация HTML и других членов
     html = R"rawliteral(<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GNSS Приёмник - NMEA Monitor</title>
+    <title>GNSS Monitor - Режим отладки</title>
     <style>
         :root {
-            --primary-color: #3498db;
-            --primary-hover: #2980b9;
-            --success-color: #27ae60;
-            --error-color: #e74c3c;
-            --bg-color: #f0f0f0;
-            --card-color: #fff;
-            --text-color: #333;
-            --dark-bg: #2c3e50;
-            --light-text: #ecf0f1;
-            --disabled-color: #95a5a6;
-            --border-radius: 8px;
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border-radius: 0.375rem;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-        
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 1rem;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: var(--card-color);
-            padding: 25px;
+            background: white;
             border-radius: var(--border-radius);
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            overflow: hidden;
         }
-        
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         h1 {
-            color: var(--dark-bg);
-            text-align: center;
-            margin-bottom: 25px;
+            font-size: 1.5rem;
             font-weight: 600;
         }
-        
+
         .control-panel {
-            background-color: #f8f9fa;
-            padding: 18px;
-            border-radius: var(--border-radius);
-            margin-bottom: 25px;
             display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
             flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-            border: 1px solid #e0e0e0;
         }
-        
+
         .control-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.5rem;
         }
-        
+
         label {
-            font-weight: 600;
-            font-size: 15px;
+            font-weight: 500;
+            font-size: 0.875rem;
         }
-        
+
         select, button {
-            padding: 10px 15px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            font-size: 15px;
-            transition: all 0.2s;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #ced4da;
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
         }
-        
+
         select {
-            min-width: 120px;
             background-color: white;
+            min-width: 120px;
         }
-        
+
         select:focus, button:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+            border-color: var(--primary);
         }
-        
+
         button {
-            background-color: var(--primary-color);
+            background-color: var(--primary);
             color: white;
             border: none;
             cursor: pointer;
             font-weight: 500;
         }
-        
+
         button:hover {
-            background-color: var(--primary-hover);
+            background-color: var(--primary-dark);
             transform: translateY(-1px);
         }
-        
+
         button:active {
             transform: translateY(0);
         }
-        
+
         button:disabled {
-            background-color: var(--disabled-color);
+            background-color: var(--gray);
             cursor: not-allowed;
-            transform: none;
+            opacity: 0.7;
         }
-        
-        .data-display {
-            background-color: var(--dark-bg);
-            color: var(--light-text);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            font-family: 'Consolas', 'Monaco', monospace;
-            height: 500px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.5;
-            font-size: 14px;
-            border: 1px solid #3d5166;
+
+        .btn-danger {
+            background-color: var(--danger);
         }
-        
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .data-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+        }
+
         .status-bar {
             display: flex;
             justify-content: space-between;
-            margin: 15px 0;
-            padding: 12px 15px;
-            background-color: #f8f9fa;
-            border-radius: var(--border-radius);
-            font-size: 14px;
-            border: 1px solid #e0e0e0;
+            padding: 0.75rem 1rem;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.875rem;
         }
-        
+
         .status-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
         }
-        
+
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
         }
-        
+
         .connected {
-            color: var(--success-color);
-            font-weight: 600;
+            color: var(--success);
         }
-        
+
         .disconnected {
-            color: var(--error-color);
-            font-weight: 600;
+            color: var(--danger);
         }
-        
-        .connected-indicator {
-            background-color: var(--success-color);
+
+        .data-display {
+            flex-grow: 1;
+            padding: 1rem;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
         }
-        
-        .disconnected-indicator {
-            background-color: var(--error-color);
-        }
-        
+
         .timestamp {
-            color: #7f8c8d;
-            font-size: 13px;
+            color: #94a3b8;
+            font-size: 0.75rem;
         }
-        
+
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
             .control-panel {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
             }
             
-            .data-display {
-                height: 400px;
-                font-size: 13px;
+            .status-bar {
+                flex-wrap: wrap;
+                gap: 0.5rem;
             }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>GNSS Приёмник - NMEA Monitor</h1>
-        
+        <header>
+            <h1>GNSS Monitor</h1>
+            <div class="status-item">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">Подключение...</span>
+            </div>
+        </header>
+
         <div class="control-panel">
             <div class="control-group">
                 <label for="baud-rate">Скорость:</label>
@@ -211,16 +221,12 @@ DebugTool::DebugTool(uint16_t port)
                 </select>
             </div>
             
-            <button id="apply-btn" class="btn-primary">Применить</button>
-            <button id="clear-btn">Очистить</button>
-            <button id="export-btn">Экспорт</button>
+            <button id="apply-btn">Применить</button>
+            <button id="clear-btn" class="btn-danger">Очистить</button>
+            <button id="export-btn" class="btn-success">Экспорт</button>
         </div>
-        
+
         <div class="status-bar">
-            <div class="status-item">
-                <span class="status-indicator connected-indicator" id="status-indicator"></span>
-                <span>Статус: <span id="status-text" class="connected">Подключение...</span></span>
-            </div>
             <div class="status-item">
                 <span>Битрейт: <span id="baud-text">115200</span> бод</span>
             </div>
@@ -231,181 +237,201 @@ DebugTool::DebugTool(uint16_t port)
                 Последнее обновление: --
             </div>
         </div>
-        
-        <div class="data-display" id="nmea-output">
-            // Ожидание данных GNSS...
+
+        <div class="data-container">
+            <div class="data-display" id="nmea-output">
+// Ожидание данных GNSS...
+            </div>
         </div>
     </div>
 
     <script>
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const wsUrl = wsProtocol + window.location.hostname + ':' + window.location.port + '/ws';
-        
-        let ws;
-        let reconnectAttempts = 0;
-        let totalBytesReceived = 0;
-        let lastMessageTime = null;
-        let isFirstMessage = true;
-        
-        // DOM elements
-        const nmeaOutput = document.getElementById('nmea-output');
-        const statusText = document.getElementById('status-text');
-        const statusIndicator = document.getElementById('status-indicator');
-        const baudText = document.getElementById('baud-text');
-        const bytesReceived = document.getElementById('bytes-received');
-        const lastUpdate = document.getElementById('last-update');
-        const applyBtn = document.getElementById('apply-btn');
-        const baudRateSelect = document.getElementById('baud-rate');
-        const clearBtn = document.getElementById('clear-btn');
-        const exportBtn = document.getElementById('export-btn');
-        
-        function updateStatusTime() {
-            const now = new Date();
-            lastUpdate.textContent = `Последнее обновление: ${now.toLocaleTimeString()}`;
-            lastMessageTime = now;
-        }
-        
-        function initWebSocket() {
-            statusText.textContent = 'Подключение...';
-            statusIndicator.className = 'status-indicator';
-            
-            // Add cache buster to prevent connection issues
-            const cacheBuster = '?_=' + Date.now();
-            ws = new WebSocket(wsUrl + cacheBuster);
-            
-            ws.onopen = function() {
-                reconnectAttempts = 0;
-                statusText.textContent = 'Активно';
-                statusText.className = 'connected';
-                statusIndicator.className = 'status-indicator connected-indicator';
-                console.log('WebSocket connected');
+        class GNSSMonitor {
+            constructor() {
+                this.ws = null;
+                this.reconnectAttempts = 0;
+                this.totalBytesReceived = 0;
+                this.lastMessageTime = null;
+                this.isFirstMessage = true;
+                this.connectionTimeout = null;
+
+                this.initElements();
+                this.initEventListeners();
+                this.initWebSocket();
+                this.initConnectionMonitor();
+            }
+
+            initElements() {
+                this.nmeaOutput = document.getElementById('nmea-output');
+                this.statusText = document.getElementById('status-text');
+                this.statusIndicator = document.getElementById('status-indicator');
+                this.baudText = document.getElementById('baud-text');
+                this.bytesReceived = document.getElementById('bytes-received');
+                this.lastUpdate = document.getElementById('last-update');
+                this.applyBtn = document.getElementById('apply-btn');
+                this.baudRateSelect = document.getElementById('baud-rate');
+                this.clearBtn = document.getElementById('clear-btn');
+                this.exportBtn = document.getElementById('export-btn');
+            }
+
+            initEventListeners() {
+                this.applyBtn.addEventListener('click', () => this.handleBaudRateChange());
+                this.clearBtn.addEventListener('click', () => this.clearData());
+                this.exportBtn.addEventListener('click', () => this.exportData());
+            }
+
+            initWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                const url = protocol + window.location.hostname + ':' + window.location.port + '/ws';
                 
-                // Request initial data
-                ws.send('INIT');
-            };
-            
-            ws.onclose = function(e) {
-                if (e.code === 1000) {
-                    statusText.textContent = 'Отключено';
-                    console.log('WebSocket closed normally');
-                    return;
+                this.updateConnectionStatus('Подключение...', false);
+                
+                if (this.ws) {
+                    this.ws.close();
                 }
-                
-                statusText.textContent = 'Неактивно';
-                statusText.className = 'disconnected';
-                statusIndicator.className = 'status-indicator disconnected-indicator';
-                
-                const delay = Math.min(5000, (reconnectAttempts + 1) * 1000);
-                reconnectAttempts++;
-                console.log(`WebSocket disconnected. Reconnecting in ${delay/1000} seconds...`);
-                
-                setTimeout(initWebSocket, delay);
-            };
-            
-            ws.onerror = function(error) {
-                console.error('WebSocket error:', error);
-                statusText.textContent = 'Ошибка подключения';
-                statusText.className = 'disconnected';
-                statusIndicator.className = 'status-indicator disconnected-indicator';
-            };
-            
-            ws.onmessage = function(event) {
+
+                this.ws = new WebSocket(url + '?_=' + Date.now());
+
+                this.ws.onopen = () => {
+                    this.reconnectAttempts = 0;
+                    this.updateConnectionStatus('Активно', true);
+                    this.ws.send('INIT');
+                };
+
+                this.ws.onclose = (e) => {
+                    if (e.code === 1000) {
+                        this.updateConnectionStatus('Отключено', false);
+                        return;
+                    }
+
+                    this.updateConnectionStatus('Неактивно', false);
+                    const delay = Math.min(5000, (this.reconnectAttempts + 1) * 1000);
+                    this.reconnectAttempts++;
+                    setTimeout(() => this.initWebSocket(), delay);
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus('Ошибка подключения', false);
+                };
+
+                this.ws.onmessage = (event) => this.handleMessage(event.data);
+            }
+
+            handleMessage(message) {
                 try {
-                    const message = event.data;
-                    console.log('Received message:', message); // Debug log
-                    
+                    if (!message) return;
+
                     const messageSize = new Blob([message]).size;
-                    totalBytesReceived += messageSize;
-                    bytesReceived.textContent = totalBytesReceived.toLocaleString();
-                    
+                    this.totalBytesReceived += messageSize;
+                    this.bytesReceived.textContent = this.totalBytesReceived.toLocaleString();
+
                     if (message.startsWith('BAUDRATE:')) {
                         const baud = message.substring(9);
-                        baudText.textContent = baud;
-                        baudRateSelect.value = baud;
+                        this.baudText.textContent = baud;
+                        this.baudRateSelect.value = baud;
                     } else {
-                        // Clear "waiting for data" message on first real data
-                        if (isFirstMessage) {
-                            nmeaOutput.textContent = '';
-                            isFirstMessage = false;
-                        }
-                        
-                        // Ensure proper line endings
-                        const formattedMessage = message.endsWith('\n') ? message : message + '\n';
-                        const now = new Date();
-                        const timestamp = `[${now.toLocaleTimeString()}] `;
-                        
-                        // Prevent memory issues with large logs
-                        if (nmeaOutput.textContent.length > 100000) {
-                            nmeaOutput.textContent = nmeaOutput.textContent.substring(50000);
-                        }
-                        
-                        nmeaOutput.textContent += timestamp + formattedMessage;
-                        nmeaOutput.scrollTop = nmeaOutput.scrollHeight;
+                        this.processDataMessage(message);
                     }
-                    
-                    updateStatusTime();
+
+                    this.updateStatusTime();
                 } catch (e) {
                     console.error('Error processing message:', e);
                 }
-            };
-        }
-        
-        function exportData() {
-            try {
-                const blob = new Blob([nmeaOutput.textContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `nmea_data_${new Date().toISOString().slice(0,10)}.log`;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-            } catch (e) {
-                console.error('Export failed:', e);
-                alert('Ошибка при экспорте данных');
             }
-        }
-        
-        // Event listeners
-        applyBtn.addEventListener('click', function() {
-            const selectedBaud = baudRateSelect.value;
-            if (ws && ws.readyState === WebSocket.OPEN) {
+
+            processDataMessage(message) {
+                if (this.isFirstMessage) {
+                    this.nmeaOutput.textContent = '';
+                    this.isFirstMessage = false;
+                }
+
+                const now = new Date();
+                const timestamp = `[${now.toLocaleTimeString()}] `;
+                const formattedMessage = message.endsWith('\n') ? message : message + '\n';
+
+                // Prevent memory issues
+                if (this.nmeaOutput.textContent.length > 100000) {
+                    this.nmeaOutput.textContent = this.nmeaOutput.textContent.substring(50000);
+                }
+
+                this.nmeaOutput.textContent += timestamp + formattedMessage;
+                this.nmeaOutput.scrollTop = this.nmeaOutput.scrollHeight;
+            }
+
+            handleBaudRateChange() {
+                const selectedBaud = this.baudRateSelect.value;
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send('BAUD:' + selectedBaud);
+                }
+            }
+
+            clearData() {
+                this.nmeaOutput.textContent = '// Лог очищен\n';
+                this.totalBytesReceived = 0;
+                this.bytesReceived.textContent = '0';
+            }
+
+            exportData() {
+                if (!this.nmeaOutput.textContent.trim() || 
+                    this.nmeaOutput.textContent === '// Ожидание данных GNSS...') {
+                    alert('Нет данных для экспорта');
+                    return;
+                }
+
                 try {
-                    ws.send('BAUD:' + selectedBaud);
+                    const blob = new Blob([this.nmeaOutput.textContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `gnss_data_${new Date().toISOString().slice(0, 10)}.log`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 100);
                 } catch (e) {
-                    console.error('Error sending baud rate:', e);
+                    console.error('Export failed:', e);
+                    alert('Ошибка при экспорте данных');
                 }
             }
-        });
-        
-        clearBtn.addEventListener('click', function() {
-            nmeaOutput.textContent = '// Лог очищен\n';
-            totalBytesReceived = 0;
-            bytesReceived.textContent = '0';
-        });
-        
-        exportBtn.addEventListener('click', exportData);
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            initWebSocket();
-            updateStatusTime();
-            
-            // Connection health check
-            setInterval(() => {
-                if (lastMessageTime && (new Date() - lastMessageTime) > 10000) {
-                    statusText.textContent = 'Нет данных';
-                    statusIndicator.className = 'status-indicator disconnected-indicator';
-                    
-                    // Attempt reconnect if no data for 10 seconds
-                    if (ws.readyState !== WebSocket.CONNECTING && ws.readyState !== WebSocket.OPEN) {
-                        initWebSocket();
-                    }
+
+            updateConnectionStatus(text, isConnected) {
+                this.statusText.textContent = text;
+                this.statusText.className = isConnected ? 'connected' : 'disconnected';
+                this.statusIndicator.className = 'status-indicator ' + 
+                    (isConnected ? 'connected' : 'disconnected');
+            }
+
+            updateStatusTime() {
+                const now = new Date();
+                this.lastUpdate.textContent = `Последнее обновление: ${now.toLocaleTimeString()}`;
+                this.lastMessageTime = now;
+                
+                // Reset connection status if data is flowing again
+                if (this.statusText.textContent === 'Нет данных') {
+                    this.updateConnectionStatus('Активно', true);
                 }
-            }, 5000);
+            }
+
+            initConnectionMonitor() {
+                setInterval(() => {
+                    if (this.lastMessageTime && (new Date() - this.lastMessageTime) > 10000) {
+                        this.updateConnectionStatus('Нет данных', false);
+                        
+                        if (this.ws.readyState !== WebSocket.CONNECTING && 
+                            this.ws.readyState !== WebSocket.OPEN) {
+                            this.initWebSocket();
+                        }
+                    }
+                }, 5000);
+            }
+        }
+
+        // Initialize application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new GNSSMonitor();
         });
     </script>
 </body>

@@ -1,18 +1,18 @@
 #include "tasks/GPSTask.h"
 #include "tasks/SpoofingCheckTask.h"
 #include "HardwareSerial.h"
-#include "sensors/GPS/Defines.h"
+#include "defines/Defines.h"
 #include "sensors/GPS/GPS.h"
 #include "WebServer/WebServer.h"
 #include "tasks/WebServerTask.h"
+
 SemaphoreHandle_t xMutex = nullptr;
-EventGroupHandle_t gpsEventGroup = nullptr;
 
 
 void setup() {
     Serial.begin(115200, SERIAL_8N1);
     initializeSharedResources(); 
-    if (gpsEventGroup == NULL || xMutex == NULL) {
+    if (xMutex == NULL) {
         Serial.println("Ошибка инициализации ресурсов!");
         while(1);
     }
