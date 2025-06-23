@@ -18,7 +18,7 @@ void SpoofingCheckTask::run(void* pvParameters) {
                     Serial.println("Спуфинг больше не обнаружен, возобновляем работу GPS");
                 }
             }
-            
+            // initial commit for Andrey
             xSemaphoreGive(xMutex);
         }
         vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL));
